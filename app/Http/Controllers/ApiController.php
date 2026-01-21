@@ -627,6 +627,54 @@ class ApiController extends Controller
         return response()->json(['message' => 'Portfolio item created successfully', 'portfolio' => $portfolio], 201);
     }
 
+
+    public function createGallery(Request $request){
+
+        return response()->json(['message' => 'Gallery upload endpoint reached', 'request' => $request->all()], 200);
+
+             $validator = Validator::make($request->all(), [
+            'title' => 'required|string|max:255',
+            'subtitle' => 'nullable|string|max:255',
+            'image_file' => 'required|file|image|max:2048',
+            'video_file' => 'nullable|file|mimetypes:video/mp4,video/avi,video/mpeg,video/quicktime|max:10240',
+            'file_file' => 'nullable|file|max:10240',
+            'short_description' => 'nullable|string',
+            'detailed_description' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $validated = $validator->validated();
+
+        // Handle image file upload
+        if ($request->hasFile('image_file')) {
+            $imagePath = $request->file('image_file')->store('gallery', 'public');
+            $validated['image_path'] = $imagePath;
+        }
+
+           // Handle video file upload
+        if ($request->hasFile('video_file')) {
+            $videoPath = $request->file('video_file')->store('gallery', 'public');
+            $validated['video_path'] = $videoPath;
+        }
+
+        // Handle general file upload
+        if ($request->hasFile('file_file')) {
+            $filePath = $request->file('file_file')->store('gallery', 'public');
+            $validated['file_path'] = $filePath;
+        }
+
+        $gallery = Gallery::create($validated);
+
+        return response()->json(['message' => 'Gallery uploaded successfully', 'gallery' => $gallery], 201);
+
+    }
+
     public function listPortfolio()
     {
         $portfolio = Portfolio::all();
