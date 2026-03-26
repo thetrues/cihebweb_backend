@@ -4,7 +4,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ApiController;
 use App\Http\Middleware\CorsMiddleware;
-use App\Http\Controllers\Auth\AuthController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -26,7 +25,7 @@ Route::middleware(CorsMiddleware::class)->group(function () {
 
     });
 
-     Route::post('/slider/create', [ApiController::class, 'createSlider']);
+        Route::post('/slider/create', [ApiController::class, 'createSlider']);
         Route::post('/slider/{id}/update', [ApiController::class, 'updateSlider']);
         Route::post('/slider/{id}/delete', [ApiController::class, 'deleteSlider']);
         Route::post('/about-us/create', [ApiController::class, 'createAboutUs']);
