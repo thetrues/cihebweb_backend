@@ -1,0 +1,96 @@
+{
+    "id": "H9a4SMFpH3N",
+    "name": "Recruitment",
+    "program": "IBuQKAzlpM8",
+    "useChild": true,
+    "attributes": [
+      {
+         "name": "Recruitment Reference Number",
+         "code": "reference_number",
+         "id": "PByXYzd3mm4"
+      },
+      {
+        "name": "Recruitment Title",
+        "code": "title",
+        "id": "gcnPS35yD0e"
+      },
+      {
+        "name": "Recruitment Location",
+        "code": "location",
+        "id": "ItLUyglz85G"
+      },
+      {
+         "name": "Recruitment Posted By Id",
+         "code": "posted_by_id",
+         "id": "SOuXT8uHH8Y"
+      },
+      {
+         "name": "Recruitment Posted By Name",
+         "code": "posted_by_name",
+         "id": "WEUQpC8zrxO"
+      },
+      {
+         "name": "Recruitment Description",
+         "code": "description",
+         "id": "r1GGbx4TIFD"
+      },
+      {
+         "name": "Recruitment End Date",
+         "code": "end_date",
+         "id": "M5qsRK5n6SX"
+      },
+      {
+         "name": "Recruitment Start Date",
+         "code": "start_date",
+         "id": "PhvncaB8rdi"
+      },
+      {
+         "name": "Recruitment Work Type",
+         "code": "work_type",
+         "id": "rClYIfLaFuc"
+      },
+      {
+         "name": "Recruitment Job Type",
+         "code": "job_type",
+         "id": "EuQzJEkIPvb"
+      },
+      {
+         "name": "Recruitment Region Id",
+         "code": "region_id",
+         "id": "vLYhbRD44KW"
+      },
+      {
+         "name": "Recruitment Region Name",
+         "code": "region_name",
+         "id": "uIfTQKc14Sy"
+      },
+      {
+         "name": "Recruitment Status",
+         "code": "status",
+         "id": "q2q4NURHygI"
+      },
+      {
+        "name": "Current State",
+        "code": "current_state",
+        "id": "ObnE3GDg8zq"
+      }
+   ],
+    "stage": {
+        "Description": {
+            "name": "descriptions",
+            "id": "wFbwZvrdqTS",
+            "dataElements": [
+                {
+                    "code": "name",
+                    "name": "Name",
+                    "id": "OIlHXyQGQom"
+                },
+                {
+                    "code": "description",
+                    "name": "Description",
+                    "id": "y6calZGcGDg"
+                }
+            ]
+        }
+    }
+}

@@ -38,5 +38,22 @@ Route::middleware(CorsMiddleware::class)->group(function () {
         Route::post('/projects/{id}/update', [ApiController::class, 'updateProject']);
         Route::post('/portfolio/create', [ApiController::class, 'createPortfolioItem']);
         Route::post('/portfolio/{id}/update', [ApiController::class, 'updatePortfolioItem']);
+
+
+       
+
    
 });
+
+ //career routes
+        Route::post('/career', [App\Http\Controllers\CareerController::class, 'store']);
+        Route::get('/career', [App\Http\Controllers\CareerController::class, 'index']);
+        Route::get('/career/{id}', [App\Http\Controllers\CareerController::class, 'show']);
+        Route::put('/career/{id}', [App\Http\Controllers\CareerController::class, 'update']);
+        Route::delete('/career/{id}', [App\Http\Controllers\CareerController::class, 'destroy']);
+
+        //application routes
+        Route::post('/career/submit', [App\Http\Controllers\ApplicationController::class, 'store']);
+        Route::get('/applications', [App\Http\Controllers\ApplicationController::class, 'index']);
+        Route::get('/applications/{id}', [App\Http\Controllers\ApplicationController::class, 'show']);
+        Route::delete('/applications/{id}', [App\Http\Controllers\ApplicationController::class, 'destroy']);
