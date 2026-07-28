@@ -43,6 +43,7 @@ class Dhis2Service
             'trackedEntityType' => 'H9a4SMFpH3N',
             'page' => 1,
             'pageSize' => 400,
+            'filter' => 'q2q4NURHygI:eq:OPEN',
             'fields' => 'createdAt,orgUnit,trackedEntity,updatedAt,enrollments[storedBy,enrolledAt,enrollment,events[event,programStage,occurredAt,status,dataValues[dataElement,value]]],attributes[storedBy,value,attribute,code]'
         ];
 
