@@ -57,3 +57,13 @@ Route::middleware(CorsMiddleware::class)->group(function () {
         Route::get('/applications', [App\Http\Controllers\ApplicationController::class, 'index']);
         Route::get('/applications/{id}', [App\Http\Controllers\ApplicationController::class, 'show']);
         Route::delete('/applications/{id}', [App\Http\Controllers\ApplicationController::class, 'destroy']);
+
+
+    // success stories routes
+    Route::post('/success-story', [App\Http\Controllers\ApiController::class, 'createSuccessStory']);
+    Route::get('/success-story', [App\Http\Controllers\ApiController::class, 'getSuccessStoriesAll']);
+    Route::get('/success-stories', [App\Http\Controllers\ApiController::class, 'getSuccessStories']);
+    Route::get('/success-stories/{id}', [App\Http\Controllers\ApiController::class, 'getSuccessStoryById']);
+    Route::put('/success-stories/{id}', [App\Http\Controllers\ApiController::class, 'updateSuccessStory']);
+    Route::delete('/success-stories/{id}', [App\Http\Controllers\ApiController::class, 'deleteSuccessStory']);
+

@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Slider;
 use App\Models\AboutUs;
 use App\Models\Gallery;
-use App\Models\Project;
-use App\Models\Portfolio;
 use App\Models\Initiative;
+use App\Models\Portfolio;
+use App\Models\Project;
+use App\Models\Slider;
+use App\Models\SuccessStory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -762,5 +763,80 @@ class ApiController extends Controller
         $portfolio->update($validated);
 
         return response()->json(['message' => 'Portfolio item updated successfully', 'portfolio' => $portfolio], 200);
+    }
+
+    public function createSuccessStory(Request $request)
+    {
+
+        /*
+        {"title":"AMR specimens referred to regional testing laboratoriesn","description":"jkbhjsvs njhsivbj","impact":"65","beneficiaries":"4000+","quote":"ds","author":"Dr sam","position":"asa","is_active":true,"image":"https://qi-mis.org/logo"}
+        */
+        
+        $validatedData = Validator::make($request->all(), [
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'impact' => 'nullable|string|max:255',
+            'beneficiaries' => 'nullable|string|max:255',
+            'quote' => 'nullable|string',
+            'author' => 'nullable|string|max:255',
+            'position' => 'nullable|string|max:255',
+            'is_active' => 'required|boolean',
+            'image' => 'nullable',
+        ]);
+
+         if ($validatedData->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validatedData->errors(),
+            ], 422);
+        }
+        //image is base64 encoded string, we need to decode it and store it in the storage/app/public/success_stories folder
+        $imagePath = null;
+        if ($request->has('image')) {
+            $imageData = $request->input('image');
+            $mimeType = finfo_buffer(finfo_open(FILEINFO_MIME_TYPE), base64_decode($imageData));
+            $extension = match($mimeType) {
+                'image/jpeg' => 'jpg',
+                'image/png' => 'png',
+                'image/gif' => 'gif',
+                'image/webp' => 'webp',
+                default => 'png',
+            };
+            $imageName = time() . '.' . $mimeType;
+            $imagePath = 'success_stories/' . $imageName;
+            Storage::disk('public')->put($imagePath, base64_decode($imageData));
+            $request->merge(['image' => $imagePath]);
+            $request->request->set('image', $imagePath);
+        }
+
+       //return response()->json(['message' => 'Data received successfully', 'data' => $request->all()], 200);
+
+        $data = $validatedData->validated();
+
+        $successStory = SuccessStory::create(array_merge($data, ['image' => $imagePath]));
+
+        return response()->json(['message' => 'Data received successfully', 'data' => $successStory], 200);
+    }
+
+    public function getSuccessStories()
+    {
+        $successStories = SuccessStory::where('is_active', true)->get();
+        return response()->json($successStories);
+    }
+
+    public function getSuccessStoriesAll()
+    {
+        $successStories = SuccessStory::all();
+        return response()->json($successStories);
+    }
+
+    public function getSuccessStoryById($id)
+    {
+        $successStory = SuccessStory::find($id);
+        if ($successStory) {
+            return response()->json($successStory);
+        } else {
+            return response()->json(['message' => 'Success Story not found'], 404);
+        }
     }
 }
