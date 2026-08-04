@@ -630,13 +630,10 @@ class ApiController extends Controller
 
 
     public function createGallery(Request $request){
-
-        return response()->json(['message' => 'Gallery upload endpoint reached', 'request' => $request->all()], 200);
-
              $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'subtitle' => 'nullable|string|max:255',
-            'image_file' => 'required|file|image|max:2048',
+            'image_file' => 'required',
             'video_file' => 'nullable|file|mimetypes:video/mp4,video/avi,video/mpeg,video/quicktime|max:10240',
             'file_file' => 'nullable|file|max:10240',
             'short_description' => 'nullable|string',
@@ -652,11 +649,32 @@ class ApiController extends Controller
 
         $validated = $validator->validated();
 
-        // Handle image file upload
-        if ($request->hasFile('image_file')) {
-            $imagePath = $request->file('image_file')->store('gallery', 'public');
+        // Handle image file upload base64
+         $imagePath = null;
+            
+        if ($request->has('image_file')) {
+            $imageData = $request->input('image_file');
+            // Remove data URI prefix if present
+            if (strpos($imageData, 'data:') === 0) {
+                $imageData = substr($imageData, strpos($imageData, ',') + 1);
+            }
+            $decodedImage = base64_decode($imageData);
+            $mimeType = finfo_buffer(finfo_open(FILEINFO_MIME_TYPE), $decodedImage);
+            $extension = match($mimeType) {
+                'image/jpeg' => 'jpg',
+                'image/png' => 'png',
+                'image/gif' => 'gif',
+                'image/webp' => 'webp',
+                default => 'jpg',
+            };
+            $imageName = time() . '.' . $extension;
+            $imagePath = 'gallery/' . $imageName;
+            Storage::disk('public')->put($imagePath, $decodedImage);
+            $request->merge(['image_file' => $imagePath]);
+            $request->request->set('image_file', $imagePath);
             $validated['image_path'] = $imagePath;
         }
+        
 
            // Handle video file upload
         if ($request->hasFile('video_file')) {
@@ -670,10 +688,95 @@ class ApiController extends Controller
             $validated['file_path'] = $filePath;
         }
 
-        $gallery = Gallery::create($validated);
+        $gallery = Gallery::create([
+            'title' => $validated['title'],
+            'subtitle' => $validated['subtitle'] ?? null,
+            'image_path' => $validated['image_path'] ?? null,
+            'video_path' => $validated['video_path'] ?? null,
+            'file_path' => $validated['file_path'] ?? null,
+            'short_description' => $validated['short_description'] ?? null,
+            'detailed_description' => $validated['detailed_description'] ?? null,
+        ]);
 
         return response()->json(['message' => 'Gallery uploaded successfully', 'gallery' => $gallery], 201);
 
+    }
+
+
+    public function updateGallery(Request $request, $id){
+        $gallery = Gallery::find($id);
+        if (!$gallery) {
+            return response()->json(['message' => 'Gallery item not found'], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'title' => 'sometimes|required|string|max:255',
+            'subtitle' => 'sometimes|nullable|string|max:255',
+            'image_file' => 'sometimes|nullable',
+            'video_file' => 'sometimes|nullable|mimetypes:video/mp4,video/avi,video/mpeg,video/quicktime|max:10240',
+            'file_file' => 'sometimes|nullable|max:10240',
+            'short_description' => 'sometimes|nullable|string',
+            'detailed_description' => 'sometimes|nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $validated = $validator->validated();
+
+         $imagePath = null;
+            
+        if ($request->has('image_file')) {
+            $imageData = $request->input('image_file');
+            // Remove data URI prefix if present
+            if (strpos($imageData, 'data:') === 0) {
+                $imageData = substr($imageData, strpos($imageData, ',') + 1);
+            }
+            $decodedImage = base64_decode($imageData);
+            $mimeType = finfo_buffer(finfo_open(FILEINFO_MIME_TYPE), $decodedImage);
+            $extension = match($mimeType) {
+                'image/jpeg' => 'jpg',
+                'image/png' => 'png',
+                'image/gif' => 'gif',
+                'image/webp' => 'webp',
+                default => 'jpg',
+            };
+            $imageName = time() . '.' . $extension;
+            $imagePath = 'gallery/' . $imageName;
+            Storage::disk('public')->put($imagePath, $decodedImage);
+            $request->merge(['image_file' => $imagePath]);
+            $request->request->set('image_file', $imagePath);
+            $validated['image_path'] = $imagePath;
+        }
+        
+
+
+        // Handle video file upload
+        if ($request->hasFile('video_file')) {
+            // Delete old video if exists
+            if ($gallery->video_path && Storage::disk('public')->exists($gallery->video_path)) {
+                Storage::disk('public')->delete($gallery->video_path);
+            }
+            $videoPath = $request->file('video_file')->store('gallery', 'public');
+            $validated['video_path'] = $videoPath;
+        }
+
+        // Handle general file upload
+        if ($request->hasFile('file_file')) {
+            // Delete old file if exists
+            if ($gallery->file_path && Storage::disk('public')->exists($gallery->file_path)) {
+                Storage::disk('public')->delete($gallery->file_path);
+            }
+            $filePath = $request->file('file_file')->store('gallery', 'public');
+            $validated['file_path'] = $filePath;
+        }
+        $gallery->update($validated);
+
+        return response()->json(['message' => 'Gallery updated successfully', 'gallery' => $gallery], 200);
     }
 
     public function listPortfolio()
@@ -791,20 +894,26 @@ class ApiController extends Controller
             ], 422);
         }
         //image is base64 encoded string, we need to decode it and store it in the storage/app/public/success_stories folder
+        //image post sample ,"image":"data:image/jpeg;base64,/9j/4WFVRXhpZgAASUkqAAgAAEABBAAD/4QAiRXhpZgAATU0AKgAAAAgABwESAAMAAAABAAEAAIdpAAQAAAABAAAAJgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwAAAAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLf/AABEIAKgBLAMBIgACEAMBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAcAAAECAwQABRESIQYxQVEHEyJhcYEykaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXh5eoKDhIWGh4iJipKTlJWWl5iZmq
         $imagePath = null;
         if ($request->has('image')) {
             $imageData = $request->input('image');
-            $mimeType = finfo_buffer(finfo_open(FILEINFO_MIME_TYPE), base64_decode($imageData));
+            // Remove data URI prefix if present
+            if (strpos($imageData, 'data:') === 0) {
+                $imageData = substr($imageData, strpos($imageData, ',') + 1);
+            }
+            $decodedImage = base64_decode($imageData);
+            $mimeType = finfo_buffer(finfo_open(FILEINFO_MIME_TYPE), $decodedImage);
             $extension = match($mimeType) {
                 'image/jpeg' => 'jpg',
                 'image/png' => 'png',
                 'image/gif' => 'gif',
                 'image/webp' => 'webp',
-                default => 'png',
+                default => 'jpg',
             };
-            $imageName = time() . '.' . $mimeType;
+            $imageName = time() . '.' . $extension;
             $imagePath = 'success_stories/' . $imageName;
-            Storage::disk('public')->put($imagePath, base64_decode($imageData));
+            Storage::disk('public')->put($imagePath, $decodedImage);
             $request->merge(['image' => $imagePath]);
             $request->request->set('image', $imagePath);
         }
@@ -816,6 +925,85 @@ class ApiController extends Controller
         $successStory = SuccessStory::create(array_merge($data, ['image' => $imagePath]));
 
         return response()->json(['message' => 'Data received successfully', 'data' => $successStory], 200);
+    }
+
+    public function updateSuccessStory($id)
+    {
+       
+        $successStory = SuccessStory::find($id);
+        if (!$successStory) {
+            return response()->json(['message' => 'Success Story not found'], 404);
+        }
+
+        $validatedData = Validator::make(request()->all(), [
+            'title' => 'sometimes|required|string|max:255',
+            'description' => 'sometimes|required|string',
+            'impact' => 'sometimes|nullable|string|max:255',
+            'beneficiaries' => 'sometimes|nullable|string|max:255',
+            'quote' => 'sometimes|nullable|string',
+            'author' => 'sometimes|nullable|string|max:255',
+            'position' => 'sometimes|nullable|string|max:255',
+            'is_active' => 'sometimes|required|boolean',
+            'image' => 'sometimes|nullable',
+        ]);
+
+        if ($validatedData->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validatedData->errors(),
+            ], 422);
+        }
+
+        $data = $validatedData->validated();
+
+        // Handle image update if provided
+        if (isset($data['image'])) {
+            // Delete old image if exists
+            if ($successStory->image && Storage::disk('public')->exists($successStory->image)) {
+                Storage::disk('public')->delete($successStory->image);
+            }
+
+            // Process new image
+            $imageData = $data['image'];
+            if (strpos($imageData, 'data:') === 0) {
+                $imageData = substr($imageData, strpos($imageData, ',') + 1);
+            }
+            $decodedImage = base64_decode($imageData);
+            $mimeType = finfo_buffer(finfo_open(FILEINFO_MIME_TYPE), $decodedImage);
+            $extension = match($mimeType) {
+                'image/jpeg' => 'jpg',
+                'image/png' => 'png',
+                'image/gif' => 'gif',
+                'image/webp' => 'webp',
+                default => 'jpg',
+            };
+            $imageName = time() . '.' . $extension;
+            $imagePath = 'success_stories/' . $imageName;
+            Storage::disk('public')->put($imagePath, $decodedImage);
+            $data['image'] = $imagePath;
+        }
+
+        $successStory->update($data);
+
+        return response()->json(['message' => 'Success Story updated successfully', 'data' => $successStory], 200);
+    }
+
+
+    public function deleteSuccessStory($id)
+    {
+        $successStory = SuccessStory::find($id);
+        if (!$successStory) {
+            return response()->json(['message' => 'Success Story not found'], 404);
+        }
+
+        // Optionally delete the image file from storage
+        if ($successStory->image && Storage::disk('public')->exists($successStory->image)) {
+            Storage::disk('public')->delete($successStory->image);
+        }
+
+        $successStory->delete();
+
+        return response()->json(['message' => 'Success Story deleted successfully'], 200);
     }
 
     public function getSuccessStories()

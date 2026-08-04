@@ -32,15 +32,24 @@ Route::middleware(CorsMiddleware::class)->group(function () {
         Route::post('/about-us/update', [ApiController::class, 'updateAboutUs']);
         Route::post('/initiatives/create', [ApiController::class, 'createInitiative']);
         Route::post('/initiatives/{id}/update', [ApiController::class, 'updateInitiative']);
+
         Route::post('/gallery/create', [ApiController::class, 'createGallery']);
-        Route::post('/gallery/{id}/update', [ApiController::class, 'updateGalleryItem']);
-        Route::post('/projects/create', [ApiController::class, 'createProject']);
-        Route::post('/projects/{id}/update', [ApiController::class, 'updateProject']);
+        Route::put('/gallery/{id}', [ApiController::class, 'updateGallery']);
+
+
+    
         Route::post('/portfolio/create', [ApiController::class, 'createPortfolioItem']);
         Route::post('/portfolio/{id}/update', [ApiController::class, 'updatePortfolioItem']);
 
 
-       
+       //admin/project
+       Route::get('/admin/project', [ApiController::class, 'listProjects']);
+        Route::get('/admin/projects/{id}', [ApiController::class, 'getProjectById']);
+        Route::get('/admin/projects/{id}/view', [ApiController::class, 'viewProject']);
+        Route::post('/admin/project', [ApiController::class, 'createProject']);
+        Route::put('/admin/project/{id}', [ApiController::class, 'updateProject']);
+        Route::delete('/admin/project/{id}', [ApiController::class, 'deleteProject']);
+
 
    
 });
@@ -64,6 +73,14 @@ Route::middleware(CorsMiddleware::class)->group(function () {
     Route::get('/success-story', [App\Http\Controllers\ApiController::class, 'getSuccessStoriesAll']);
     Route::get('/success-stories', [App\Http\Controllers\ApiController::class, 'getSuccessStories']);
     Route::get('/success-stories/{id}', [App\Http\Controllers\ApiController::class, 'getSuccessStoryById']);
-    Route::put('/success-stories/{id}', [App\Http\Controllers\ApiController::class, 'updateSuccessStory']);
-    Route::delete('/success-stories/{id}', [App\Http\Controllers\ApiController::class, 'deleteSuccessStory']);
+    Route::put('/success-story/{id}', [App\Http\Controllers\ApiController::class, 'updateSuccessStory']);
+    Route::delete('/success-story/{id}', [App\Http\Controllers\ApiController::class, 'deleteSuccessStory']);
+
+    // admin/program routes
+    Route::get('admin/program', [App\Http\Controllers\ProgramController::class, 'allPrograms']);
+     Route::get('/programs', [App\Http\Controllers\ProgramController::class, 'index']);
+    Route::get('/admin/program/{id}', [App\Http\Controllers\ProgramController::class, 'show']);
+    Route::post('/admin/program', [App\Http\Controllers\ProgramController::class, 'store']);
+    Route::put('/admin/program/{id}', [App\Http\Controllers\ProgramController::class, 'update']);
+    Route::delete('/admin/program/{id}', [App\Http\Controllers\ProgramController::class, 'destroy']);
 
